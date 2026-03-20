@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Compteur Recrutement</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #1C3A5E;
+    width: 280px;
+    min-height: 100vh;
+    padding: 0;
+    user-select: none;
+  }
+
+  .header {
+    background: #1C3A5E;
+    padding: 10px 12px 8px;
+    text-align: center;
+  }
+  .header h1 {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .header .date {
+    color: #9fb5cc;
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  .counters {
+    background: #F9F5EF;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e0d8d0;
+  }
+
+  .label {
+    flex: 1;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1C3A5E;
+  }
+
+  .count {
+    width: 42px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1C3A5E;
+    border-left: 1px solid #e0d8d0;
+    border-right: 1px solid #e0d8d0;
+    padding: 8px 0;
+    background: #f5f0e8;
+  }
+
+  .btn-plus {
+    width: 44px;
+    height: 100%;
+    min-height: 40px;
+    background: #1C3A5E;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-plus:hover  { background: #2a5280; }
+  .btn-plus:active { background: #E8472A; transform: scale(0.96); }
+
+  .btn-minus {
+    width: 36px;
+    height: 100%;
+    min-height: 40px;
+    background: #e8e0d8;
+    color: #888;
+    font-size: 18px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-minus:hover  { background: #d8d0c8; }
+  .btn-minus:active { background: #c8c0b8; }
+
+  /* Couleur accent gauche par ligne */
+  .row-cv     .label { border-left: 3px solid #1C3A5E; }
+  .row-preq   .label { border-left: 3px solid #2D6A8F; }
+  .row-rh     .label { border-left: 3px solid #2D7D46; }
+  .row-mgr    .label { border-left: 3px solid #1A5C2E; }
+
+  .row-cv   .btn-plus { background: #1C3A5E; }
+  .row-preq .btn-plus { background: #2D6A8F; }
+  .row-rh   .btn-plus { background: #2D7D46; }
+  .row-mgr  .btn-plus { background: #1A5C2E; }
+  .row-cv   .btn-plus:hover { background: #2a5280; }
+  .row-preq .btn-plus:hover { background: #3a80aa; }
+  .row-rh   .btn-plus:hover { background: #3a9456; }
+  .row-mgr  .btn-plus:hover { background: #236b38; }
+
+  .actions {
+    background: #F9F5EF;
+    padding: 0 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .btn-recap {
+    width: 100%;
+    padding: 9px;
+    background: #1C3A5E;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+  }
+  .btn-recap:hover { background: #2a5280; }
+
+  .btn-reset {
+    width: 100%;
+    padding: 7px;
+    background: transparent;
+    color: #aaa;
+    font-size: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .btn-reset:hover { background: #f0e8e0; color: #E8472A; border-color: #E8472A; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1C3A5E;
+    color: #fff;
+    font-size: 11px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Modal recap */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(28,58,94,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px;
+    width: 250px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .modal h2 {
+    font-size: 12px;
+    color: #1C3A5E;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+  .modal textarea {
+    width: 100%;
+    height: 150px;
+    font-size: 11px;
+    line-height: 1.6;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    resize: none;
+    color: #1C3A5E;
+    background: #F9F5EF;
+  }
+  .modal-btns { display: flex; gap: 6px; margin-top: 8px; }
+  .modal-btns button {
+    flex: 1; padding: 7px; font-size: 11px; font-weight: 700;
+    border: none; border-radius: 6px; cursor: pointer; color: #fff;
+  }
+  .btn-copy2  { background: #1C3A5E; }
+  .btn-close2 { background: #888; }
+  .copied-msg { font-size: 10px; color: #2D7D46; margin-top: 5px; display: none; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Compteur Recrutement</h1>
+  <div class="date" id="dateDisplay"></div>
+</div>
+
+<div class="counters">
+  <div class="row row-cv">
+    <div class="label">CV traites</div>
+    <div class="count" id="cnt-cv">0</div>
+    <button class="btn-minus" onclick="add('cv', -1)">-</button>
+    <button class="btn-plus"  onclick="add('cv',  1)">+</button>
+  </div>
+  <div class="row row-preq">
+    <div class="label">Prequalif. tel.</div>
+    <div class="count" id="cnt-preq">0</div>
+    <button class="btn-minus" onclick="add('preq', -1)">-</button>
+    <button class="btn-plus"  onclick="add('preq',  1)">+</button>
+  </div>
+  <div class="row row-rh">
+    <div class="label">Entretiens RH</div>
+    <div class="count" id="cnt-rh">0</div>
+    <button class="btn-minus" onclick="add('rh', -1)">-</button>
+    <button class="btn-plus"  onclick="add('rh',  1)">+</button>
+  </div>
+  <div class="row row-mgr">
+    <div class="label">Entretiens Mgr</div>
+    <div class="count" id="cnt-mgr">0</div>
+    <button class="btn-minus" onclick="add('mgr', -1)">-</button>
+    <button class="btn-plus"  onclick="add('mgr',  1)">+</button>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn-recap" onclick="openRecap()">Generer le recap manager</button>
+  <button class="btn-reset" onclick="resetAll()">Remise a zero</button>
+</div>
+
+<!-- Modal recap -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>Recap a envoyer au manager</h2>
+    <textarea id="recapText" readonly></textarea>
+    <div class="modal-btns">
+      <button class="btn-copy2"  onclick="copyRecap()">Copier</button>
+      <button class="btn-close2" onclick="closeRecap()">Fermer</button>
+    </div>
+    <div class="copied-msg" id="copiedMsg">Copie ! Collez dans votre email ou Teams.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var counts = { cv: 0, preq: 0, rh: 0, mgr: 0 };
+
+  // Charger depuis localStorage si dispo
+  var saved = localStorage.getItem('recrutement_counts');
+  var savedDate = localStorage.getItem('recrutement_date');
+  var today = new Date().toLocaleDateString('fr-FR');
+
+  if (saved && savedDate === today) {
+    counts = JSON.parse(saved);
+  }
+
+  function updateDisplay() {
+    document.getElementById('cnt-cv').textContent   = counts.cv;
+    document.getElementById('cnt-preq').textContent = counts.preq;
+    document.getElementById('cnt-rh').textContent   = counts.rh;
+    document.getElementById('cnt-mgr').textContent  = counts.mgr;
+    localStorage.setItem('recrutement_counts', JSON.stringify(counts));
+    localStorage.setItem('recrutement_date', today);
+  }
+
+  function add(key, val) {
+    counts[key] = Math.max(0, counts[key] + val);
+    updateDisplay();
+    if (val > 0) showToast('+1 enregistre !');
+  }
+
+  function resetAll() {
+    if (!confirm('Remettre tous les compteurs a zero ?')) return;
+    counts = { cv: 0, preq: 0, rh: 0, mgr: 0 };
+    updateDisplay();
+    showToast('Remis a zero !');
+  }
+
+  function openRecap() {
+    var d = new Date().toLocaleDateString('fr-FR');
+    var txt =
+      'Recap recrutement du ' + d + ' :\n\n' +
+      'CV traites : '            + counts.cv   + '\n' +
+      'Prequalifications tel. : '+ counts.preq + '\n' +
+      'Entretiens RH : '         + counts.rh   + '\n' +
+      'Entretiens Manager : '    + counts.mgr;
+    document.getElementById('recapText').value = txt;
+    document.getElementById('copiedMsg').style.display = 'none';
+    document.getElementById('modalBg').classList.add('open');
+  }
+
+  function closeRecap() {
+    document.getElementById('modalBg').classList.remove('open');
+  }
+
+  function copyRecap() {
+    var t = document.getElementById('recapText');
+    t.select();
+    document.execCommand('copy');
+    document.getElementById('copiedMsg').style.display = 'block';
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function() { t.classList.remove('show'); }, 1800);
+  }
+
+  // Afficher la date
+  document.getElementById('dateDisplay').textContent =
+    new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Init affichage
+  updateDisplay();
+</script>
+</body>
+</html>
